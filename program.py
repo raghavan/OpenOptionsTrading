@@ -41,7 +41,7 @@ def calculate_implied_volatility(option_price, S, K, T, r, max_iterations=100, p
     # Return the final sigma estimate if the maximum iterations are reached
     return sigma
 
-def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_threshold=0.2, otm_threshold=0.05):
+def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_threshold=0.4, otm_threshold=0.05):
     """
     Low risk, short wait time, good reward strategy.
     """
@@ -84,14 +84,14 @@ def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_thres
     otm_calls['expected_return'] = otm_calls.apply(lambda row: (row['bid'] + row['ask']) / 2 * norm.cdf(d1(underlying_price, row['strike'], time_to_expiry, risk_free_rate, row['impliedVolatility'])), axis=1)
     otm_puts['expected_return'] = otm_puts.apply(lambda row: (row['bid'] + row['ask']) / 2 * norm.cdf(-d1(underlying_price, row['strike'], time_to_expiry, risk_free_rate, row['impliedVolatility'])), axis=1)
     
-    print("Short expiry calls:")
-    print(short_expiry_calls)
-    print("Short expiry puts:")
-    print(short_expiry_puts)
-    print("OTM calls:")
-    print(otm_calls)
-    print("OTM puts:")
-    print(otm_puts)
+    # print("Short expiry calls:")
+    # print(short_expiry_calls)
+    # print("Short expiry puts:")
+    # print(short_expiry_puts)
+    # print("OTM calls:")
+    # print(otm_calls)
+    # print("OTM puts:")
+    # print(otm_puts)
 
     # Combine the calls and puts dataframes
     selected_options = pd.concat([otm_calls, otm_puts])
@@ -128,7 +128,7 @@ def high_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate):
 
 # Example usage
 underlying_symbol = "MSFT"
-expiry_date = "2024-03-22"
+expiry_date = "2024-04-26"
 risk_free_rate = 0.02
 
 low_risk_short_options, low_risk_short_return = low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate)
