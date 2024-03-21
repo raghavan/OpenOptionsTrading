@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_threshold=0.2, otm_threshold=0.05):
+def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_threshold=0.4, otm_threshold=0.05):
     """
     Low risk, short wait time, good reward strategy.
     """
@@ -14,12 +14,21 @@ def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_thres
     if expiry_date not in expiry_dates:
         raise ValueError(f"Expiry date {expiry_date} not available for {underlying_symbol}")
     
-    option_chain = stock.option_chain(expiry_date)
+    try:
+        option_chain = stock.option_chain(expiry_date)
+    except Exception as e:
+        print(f"Error decoding JSON response: {e}")
+
     calls = option_chain.calls
     puts = option_chain.puts
     
     # Get the current underlying price
-    underlying_price = stock.info['regularMarketPrice']
+    if 'regularMarketPrice' in stock.info:
+        underlying_price = stock.info['regularMarketPrice']
+    elif 'currentPrice' in stock.info:
+        underlying_price = stock.info['currentPrice']
+    else:
+        raise KeyError("Unable to retrieve the current market price.")
     
     # Calculate time to expiry in years
     expiry_date_obj = pd.to_datetime(expiry_date)
@@ -37,6 +46,15 @@ def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_thres
     otm_calls['expected_return'] = otm_calls.apply(lambda row: (row['bid'] + row['ask']) / 2 * norm.cdf(d1(underlying_price, row['strike'], time_to_expiry, risk_free_rate, row['impliedVolatility'])), axis=1)
     otm_puts['expected_return'] = otm_puts.apply(lambda row: (row['bid'] + row['ask']) / 2 * norm.cdf(-d1(underlying_price, row['strike'], time_to_expiry, risk_free_rate, row['impliedVolatility'])), axis=1)
     
+    # print("Short expiry calls:")
+    # print(short_expiry_calls)
+    # print("Short expiry puts:")
+    # print(short_expiry_puts)
+    # print("OTM calls:")
+    # print(otm_calls)
+    # print("OTM puts:")
+    # print(otm_puts)
+
     # Combine the calls and puts dataframes
     selected_options = pd.concat([otm_calls, otm_puts])
     
