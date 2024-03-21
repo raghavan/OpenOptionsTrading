@@ -1,7 +1,9 @@
 # OpenOptionsTrading
-Options Trading Algorithms and their Python Program
+Python program to choose the best Option trading stratgey based on risk/reward criteria.
 
 # Algorithms for Options Trading
+This implementation provides a fast and efficient way to calculate implied volatility using the Newton-Raphson method. It can be used as part of a larger options trading strategy to estimate market expectations and make informed trading decisions.
+
 Here is a table with risk, reward, time, and a generated title based on the cell values:
 
 | Title                                 | Risk  | Reward | Time  |
@@ -24,4 +26,4 @@ The titles were generated as follows:
    - High risk
    - Short wait time + Best returns
 
-The titles aim to capture the essence of each trading algorithm based on its risk characteristics, reward potential, and time horizon.
+Remember to handle edge cases and input validation appropriately when integrating this function into your trading system.
