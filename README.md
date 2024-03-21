@@ -74,5 +74,3 @@ Contributions are welcome. Please open an issue first to discuss what you would 
 
 [MIT](LICENSE.txt)
 ```
-
-This markdown guide provides a straightforward explanation for users on how to get started with your project, including installation, running the provided strategies, and contributing to the project.
