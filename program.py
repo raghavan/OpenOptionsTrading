@@ -52,7 +52,11 @@ def low_risk_short_wait(underlying_symbol, expiry_date, risk_free_rate, iv_thres
     if expiry_date not in expiry_dates:
         raise ValueError(f"Expiry date {expiry_date} not available for {underlying_symbol}")
     
-    option_chain = stock.option_chain(expiry_date)
+    try:
+        option_chain = stock.option_chain(expiry_date)
+    except Exception as e:
+        print(f"Error decoding JSON response: {e}")
+
     calls = option_chain.calls
     puts = option_chain.puts
     
