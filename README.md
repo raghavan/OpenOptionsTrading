@@ -69,8 +69,3 @@ print("Expected Return:", low_risk_short_return)
 ## Contributing
 
 Contributions are welcome. Please open an issue first to discuss what you would like to change or add.
-
-## License
-
-[MIT](LICENSE.txt)
-```
