@@ -32,9 +32,6 @@ hold_loss, hold_message = trader.hold_until_expiration()
 sell_profit, sell_message = trader.sell_option()
 roll_cost, roll_message = trader.roll_option(1500)  # Example new premium
 
-print(hold_loss)
-print(hold_message)
-print(sell_profit)
-print(sell_message)
-print(roll_cost)
-print(roll_message)
+print(hold_message +" : ", hold_loss)
+print(sell_message +" : ",sell_profit)
+print(roll_message + " : ",roll_cost)
