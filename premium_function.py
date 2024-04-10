@@ -1,94 +1,73 @@
-import csv
 import yfinance as yf
 from datetime import datetime, timedelta
 
-def read_tickers_from_csv(file_path):
-    tickers = []
-    with open(file_path, 'r') as file:
-        csv_reader = csv.reader(file)
-        for row in csv_reader:
-            tickers.append(row[0])
-    return tickers
+def get_options_data(ticker, capital, limit_days):
+    stock = yf.Ticker(ticker)
+    current_price = stock.info['currentPrice']
+    expiration_dates = stock.options
 
-def find_closest_expiration_date(ticker):
-    expiration_dates = ticker.options
-    today = datetime.now().date()
-    closest_date = None
-    min_days_diff = float('inf')
-    
-    for date in expiration_dates:
-        expiration_date = datetime.strptime(date, '%Y-%m-%d').date()
-        days_diff = (expiration_date - today).days
-        if 0 < days_diff < min_days_diff:
-            min_days_diff = days_diff
-            closest_date = date
-    
-    return closest_date
+    suggestions = []
+    today = datetime.today().date()
+    limit_date = today + timedelta(days=limit_days)
 
-def allocate_capital(tickers, capital):
-    allocations = []
-    
-    for ticker_symbol in tickers:
-        ticker = yf.Ticker(ticker_symbol)
-        expiration_date = find_closest_expiration_date(ticker)
-        
-        if expiration_date:
-            options_chain = ticker.option_chain(expiration_date)
+    for expiration_date in expiration_dates:
+        expiration_date_obj = datetime.strptime(expiration_date, '%Y-%m-%d').date()
+        if expiration_date_obj <= limit_date:
+            options_chain = stock.option_chain(expiration_date)
             puts = options_chain.puts
-            
-            for _, row in puts.iterrows():
-                contracts = int(capital // (row['lastPrice'] * 100))
-                if contracts > 0:
-                    premium = contracts * row['bid'] * 100
-                    allocations.append({
-                        'ticker': ticker_symbol,
-                        'expiration_date': expiration_date,
-                        'strike': row['strike'],
-                        'premium': premium,
-                        'contracts': contracts
-                    })
-    
-    allocations.sort(key=lambda x: x['premium'], reverse=True)
-    
-    utilized_capital = 0
-    final_allocations = []
-    
-    for allocation in allocations:
-        remaining_capital = capital - utilized_capital
-        if remaining_capital >= allocation['premium']:
-            utilized_capital += allocation['premium']
-            final_allocations.append(allocation)
-        else:
-            contracts = int(remaining_capital // (allocation['premium'] / allocation['contracts']))
-            if contracts > 0:
-                premium = contracts * allocation['premium'] / allocation['contracts']
-                utilized_capital += premium
-                allocation['contracts'] = contracts
-                allocation['premium'] = premium
-                final_allocations.append(allocation)
-                break
-    
-    return final_allocations
 
-def main():
-    csv_file_path = 'stock_tickers.csv'
-    capital = 10000  # $10,000
+            for _, put in puts.iterrows():
+                strike_price = put.strike
+                if strike_price < current_price:
+                    premium = put.lastPrice
+                    contracts = int(capital // (put.strike * 100))
+                    total_premium = premium * contracts * 100
+                    days_to_expiration = (expiration_date_obj - today).days
+                    daily_income = total_premium / days_to_expiration                    
+                    if contracts > 0:
+                        suggestion = {
+                            'ticker': ticker,
+                            'expiration_date': expiration_date,
+                            'strike_price': strike_price,
+                            'premium': premium,
+                            'contracts': contracts,
+                            'current_price': current_price,
+                            'total_premium': total_premium,
+                            'daily_income': daily_income
+                        }
+                        suggestions.append(suggestion)
+    if suggestions:
+        best_suggestion = max(suggestions, key=lambda x: x['daily_income'])
+        return best_suggestion
+    else:
+        return None
+
+# Example usage
+tickers = ['AAPL','MSFT', 'PYXS']
+capital = 10000
+limit_days = 30
+
+all_suggestions = []
+
+for ticker in tickers:
+    suggestions = get_options_data(ticker, capital, limit_days)
+    if suggestions is not None:
+        all_suggestions.append(suggestions)
+
+
+if all_suggestions:
+    sorted_suggestions = sorted(all_suggestions, key=lambda x: x['daily_income'], reverse=True)
     
-    tickers = read_tickers_from_csv(csv_file_path)
-    allocations = allocate_capital(tickers, capital)
-    
-    print("Allocation Results:")
-    for allocation in allocations:
-        print(f"Ticker: {allocation['ticker']}")
-        print(f"Expiration Date: {allocation['expiration_date']}")
-        print(f"Strike Price: ${allocation['strike']:.2f}")
-        print(f"Contracts: {allocation['contracts']}")
-        print(f"Premium: ${allocation['premium']:.2f}")
+    print("Sorted Suggestions:")
+    for suggestion in sorted_suggestions:
+        print(f"Ticker: {suggestion['ticker']}")
+        print(f"Expiration Date: {suggestion['expiration_date']}")
+        print(f"Strike Price: {suggestion['strike_price']}")
+        print(f"Current Price: {suggestion['current_price']}")
+        print(f"Premium Received: {suggestion['premium']}")
+        print(f"Contracts: {suggestion['contracts']}")
+        print(f"Total Premium Received: {suggestion['total_premium']}"),
+        print(f"Daily Income:{suggestion['daily_income']}")
         print("---")
-    
-    total_premium = sum(allocation['premium'] for allocation in allocations)
-    print(f"Total Premium: ${total_premium:.2f}")
-    print(f"Utilized Capital: ${sum(allocation['premium'] for allocation in allocations):.2f}")
-
-if __name__ == '__main__':
-    main()
+else:
+    print("No suitable options found.")
